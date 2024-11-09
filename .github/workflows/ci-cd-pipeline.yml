@@ -47,7 +47,7 @@ jobs:
 
     # Step 2: Set up SSH connection to EC2
     - name: Set up SSH for deployment
-      uses: appleboy/ssh-action@v0.1.1
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.EC2_HOST }}  # EC2 instance IP stored in GitHub Secrets
         username: ec2-user  # default user for Amazon Linux 2
