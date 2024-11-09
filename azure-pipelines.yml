@@ -1,0 +1,45 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  dockerRegistryServiceConnection: '<your-docker-registry-service-connection>'
+  imageName: 'sample_app'
+
+stages:
+- stage: Build
+  displayName: 'Build Docker Image'
+  jobs:
+  - job: Build
+    displayName: 'Build Docker image from GitHub repo'
+    steps:
+    - task: Checkout@1
+      displayName: 'Checkout GitHub repository'
+
+    - task: Docker@2
+      displayName: 'Build Docker image'
+      inputs:
+        command: 'build'
+        repository: '$(imageName)'
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        tags: 'latest'
+
+- stage: Deploy
+  displayName: 'Deploy to EC2'
+  jobs:
+  - job: Deploy
+    displayName: 'Deploy Docker container to EC2'
+    steps:
+    - task: SSH@0
+      displayName: 'SSH into EC2 instance'
+      inputs:
+        sshEndpoint: '<your-ssh-service-connection>'
+        runOptions: 'inline'
+        inline: |
+          cd /home/ec2-user/sample_app
+          docker pull <your-docker-registry>/sample_app:latest
+          docker stop sample_app_container || true
+          docker rm sample_app_container || true
+          docker run -d --name sample_app_container -p 80:5000 <your-docker-registry>/sample_app:latest
