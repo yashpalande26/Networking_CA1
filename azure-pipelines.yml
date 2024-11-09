@@ -35,7 +35,7 @@ stages:
     - task: SSH@0
       displayName: 'SSH into EC2 instance'
       inputs:
-        sshEndpoint: '<your-ssh-service-connection>'
+        sshEndpoint: 'ec2-ssh-connection'
         runOptions: 'inline'
         inline: |
           cd /home/ec2-user/sample_app
