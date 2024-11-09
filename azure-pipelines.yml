@@ -1,45 +1,72 @@
-trigger:
-- main
-
-pool:
-  vmImage: 'ubuntu-latest'
-
 variables:
-  dockerRegistryServiceConnection: '<your-docker-registry-service-connection>'
-  imageName: 'sample_app'
-
+  DOCKER_REGISTRY: 'docker.io'  # Docker Registry, can also be Amazon ECR
+  IMAGE_NAME: 'sample_app'  # Name of your Docker image
+  sshEndpoint: 'ec2-ssh-connection'  # SSH service connection name in Azure DevOps
+  
 stages:
-- stage: Build
-  displayName: 'Build Docker Image'
+- stage: BuildAndDeploy
   jobs:
-  - job: Build
-    displayName: 'Build Docker image from GitHub repo'
-    steps:
-    - task: Checkout@1
-      displayName: 'Checkout GitHub repository'
+    - job: BuildAndDeployJob
+      steps:
+        # Step 1: Docker Build Task
+        - task: Docker@2
+          inputs:
+            containerRegistry: $(DOCKER_REGISTRY)  # Docker registry connection
+            command: 'build'
+            repository: $(IMAGE_NAME)  # Image repository name (Docker Hub or ECR)
+            dockerfile: $(Build.SourcesDirectory)/Dockerfile  # Dockerfile path
+            buildContext: $(Build.SourcesDirectory)  # Context path (source directory)
+            tags: 'latest'  # Tag the built image as latest
+        
+        # Step 2: SSH Deploy Task (Using SSH to deploy the Docker container on EC2)
+        - task: SSH@0
+          inputs:
+            sshEndpoint: $(sshEndpoint)  # SSH service connection to EC2 instance
+            runOptions: 'commands'  # You want to execute shell commands on EC2
+            commands: |
+              docker run -d -p 80:5000 $(IMAGE_NAME):latest  # Run the Docker container
+# trigger:
+# - main
 
-    - task: Docker@2
-      displayName: 'Build Docker image'
-      inputs:
-        command: 'build'
-        repository: '$(imageName)'
-        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        tags: 'latest'
+# pool:
+#   vmImage: 'ubuntu-latest'
 
-- stage: Deploy
-  displayName: 'Deploy to EC2'
-  jobs:
-  - job: Deploy
-    displayName: 'Deploy Docker container to EC2'
-    steps:
-    - task: SSH@0
-      displayName: 'SSH into EC2 instance'
-      inputs:
-        sshEndpoint: 'ec2-ssh-connection'
-        runOptions: 'inline'
-        inline: |
-          cd /home/ec2-user/sample_app
-          docker pull <your-docker-registry>/sample_app:latest
-          docker stop sample_app_container || true
-          docker rm sample_app_container || true
-          docker run -d --name sample_app_container -p 80:5000 <your-docker-registry>/sample_app:latest
+# variables:
+#   dockerRegistryServiceConnection: '<your-docker-registry-service-connection>'
+#   imageName: 'sample_app'
+
+# stages:
+# - stage: Build
+#   displayName: 'Build Docker Image'
+#   jobs:
+#   - job: Build
+#     displayName: 'Build Docker image from GitHub repo'
+#     steps:
+#     - task: Checkout@1
+#       displayName: 'Checkout GitHub repository'
+
+#     - task: Docker@2
+#       displayName: 'Build Docker image'
+#       inputs:
+#         command: 'build'
+#         repository: '$(imageName)'
+#         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+#         tags: 'latest'
+
+# - stage: Deploy
+#   displayName: 'Deploy to EC2'
+#   jobs:
+#   - job: Deploy
+#     displayName: 'Deploy Docker container to EC2'
+#     steps:
+#     - task: SSH@0
+#       displayName: 'SSH into EC2 instance'
+#       inputs:
+#         sshEndpoint: 'ec2-ssh-connection'
+#         runOptions: 'inline'
+#         inline: |
+#           cd /home/ec2-user/sample_app
+#           docker pull <your-docker-registry>/sample_app:latest
+#           docker stop sample_app_container || true
+#           docker rm sample_app_container || true
+#           docker run -d --name sample_app_container -p 80:5000 <your-docker-registry>/sample_app:latest
