@@ -12,11 +12,11 @@ jobs:
     steps:
     # Step 1: Checkout the code from GitHub
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v2 #pre-built GitHub Action that automatically checks out your repository’s code.
 
     # Step 2: Set up Docker Buildx (needed for multi-platform builds, optional)
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v2 #pre-configured GitHub Action that prepares Docker for building images with Buildx.
 
     # Step 3: Build Docker image
     - name: Build Docker image
@@ -25,7 +25,7 @@ jobs:
 
     # Step 4: Log in to Docker Hub (or your private registry)
     - name: Log in to Docker Hub
-      uses: docker/login-action@v2
+      uses: docker/login-action@v2 #GitHub Action that automates logging into Docker Hub.
       with:
         username: ${{ secrets.DOCKER_USERNAME }}  # Docker Hub username stored in GitHub Secrets
         password: ${{ secrets.DOCKER_PASSWORD }}  # Docker Hub password stored in GitHub Secrets
@@ -43,11 +43,11 @@ jobs:
     steps:
     # Step 1: Checkout code (again for deployment context)
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v2 #pre-defined GitHub Action that is used to checkout your code from GitHub to the runner environment
 
     # Step 2: Set up SSH connection to EC2
     - name: Set up SSH for deployment
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@master #allows you to remotely access your EC2 instance via SSH and run commands on it
       with:
         host: ${{ secrets.EC2_HOST }}  # EC2 instance IP stored in GitHub Secrets
         username: ec2-user  # default user for Amazon Linux 2
